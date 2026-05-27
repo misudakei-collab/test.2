@@ -12,7 +12,11 @@ class CommentController extends Controller
     {
         // 1. 入力チェック（バリデーション）
         $request->validate([
-            'body' => 'required|max:1000',
+             'body' => 'required|max:255',
+        ], [
+            // 💡 エラーメッセージの日本語化
+            'body.required' => 'コメントを入力してください',
+            'body.max'      => 'コメントは255文字以内で入力してください',
         ]);
 
         // 2. データベースにコメントを保存

@@ -18,12 +18,13 @@
 <!-- 📦 全体を包むメインコンテナ（左右の2カラムに分割） -->
 <div style="max-width: 1000px; margin: 0 auto; padding: 40px 20px; display: flex; gap: 60px;">
 
-    <!-- 1️⃣ 左側カラム：商品画像エリア（幅45%） -->
-    <div style="width: 45%; flex-shrink: 0;">
-        <div style="width: 100%; aspect-ratio: 1 / 1; background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; border-radius: 4px; overflow: hidden;">
-            <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+    <!-- 1️⃣ 左側カラム：商品画像（幅50%） -->
+        <div style="width: 50%;">
+            <div style="width: 100%; aspect-ratio: 1 / 1; background-color: #e5e5e5; border-radius: 4px; overflow: hidden; position: relative;">
+                <!-- 💡 修正：ネット上のURL（httpから始まる）か、ローカル画像（storage/）かを自動判別して表示 -->
+                <img src="{{ str_starts_with($item->image_path, 'http') ? $item->image_path : asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
         </div>
-    </div>
 
     <!-- 2️⃣ 右側カラム：詳細情報・購入・コメントエリア（幅55%） -->
     <div style="width: 55%; display: flex; flex-direction: column; gap: 35px;">

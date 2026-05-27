@@ -15,7 +15,8 @@
 
         <h1 style="text-align: center; font-size: 1.6em; font-weight: bold; margin-bottom: 40px; color: #111;">会員登録</h1>
 
-        <form action="/register" method="POST" style="display: flex; flex-direction: column; gap: 25px;">
+        <form action="/register?redirect=/email/verify" method="POST" style="display: flex; flex-direction: column; gap: 25px;">
+
             @csrf
 
             <!-- 👤 ユーザー名 -->

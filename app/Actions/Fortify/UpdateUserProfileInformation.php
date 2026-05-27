@@ -3,59 +3,59 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
-use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
+use Laravel\Fortify\Contracts\CreatesNewUsers;
 
-class UpdateUserProfileInformation implements UpdatesUserProfileInformation
+class CreateNewUser implements CreatesNewUsers
 {
-    /**
-     * Validate and update the given user's profile information.
-     *
-     * @param  array<string, string>  $input
-     *
-     * @throws ValidationException
-     */
-    public function update(User $user, array $input): void
-    {
-        Validator::make($input, [
-            'name' => ['required', 'string', 'max:255'],
+    use PasswordValidationRules;
 
+    public function create(array $input): User
+    {
+        // 1. バリデーションの実行
+        Validator::make($input, $this->rules(), $this->messages())->validate();
+
+        // 2. ユーザーの作成
+        return User::create([
+            'name' => $input['name'],
+            'email' => $input['email'],
+            'password' => Hash::make($input['password']),
+        ]);
+    }
+
+    /**
+     * バリデーションルールの定義
+     */
+    protected function rules(): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:20'],
             'email' => [
                 'required',
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users')->ignore($user->id),
+                Rule::unique(User::class),
             ],
-        ])->validateWithBag('updateProfileInformation');
-
-        if ($input['email'] !== $user->email &&
-            $user instanceof MustVerifyEmail) {
-            $this->updateVerifiedUser($user, $input);
-        } else {
-            $user->forceFill([
-                'name' => $input['name'],
-                'email' => $input['email'],
-            ])->save();
-        }
+            'password' => $this->passwordRules(),
+        ];
     }
 
     /**
-     * Update the given verified user's profile information.
-     *
-     * @param  array<string, string>  $input
+     * 定義書に合わせたエラーメッセージの定義
      */
-    protected function updateVerifiedUser(User $user, array $input): void
+    protected function messages(): array
     {
-        $user->forceFill([
-            'name' => $input['name'],
-            'email' => $input['email'],
-            'email_verified_at' => null,
-        ])->save();
-
-        $user->sendEmailVerificationNotification();
+        return [
+            'name.required' => 'お名前を入力してください',
+            'name.max' => 'お名前は20文字以内で入力してください',
+            'email.required' => 'メールアドレスを入力してください',
+            'email.email' => 'メールアドレスはメール形式で入力してください',
+            'password.required' => 'パスワードを入力してください',
+            'password.min' => 'パスワードは8文字以上で入力してください',
+            'password.confirmed' => 'パスワードと一致しません',
+        ];
     }
 }

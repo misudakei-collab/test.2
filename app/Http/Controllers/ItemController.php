@@ -12,7 +12,9 @@ use Stripe\Checkout\Session as StripeSession;
 
 class ItemController extends Controller
 {
-    // 出品画面の表示
+    /**
+     * 出品画面の表示
+     */
     public function create()
     {
         $conditions = Condition::all();
@@ -21,31 +23,33 @@ class ItemController extends Controller
         return view('item.create', compact('conditions', 'categories'));
     }
 
-
-    // 商品の保存処理
+    /**
+     * 商品の保存処理
+     */
     public function store(Request $request)
     {
-        // バリデーションに categories を追加
+        // 💡 バリデーション定義書のルールに100%合わせる
         $request->validate([
-            'name' => 'required',
-            'price' => 'required|integer|min:1|max:9999999',
-            'image' => 'required|image|mimes:jpeg,png|max:2048',
-            'description' => 'required',
+            'name'         => 'required',
+            'description'  => 'required|max:255',
+            'image'        => 'required|image|mimes:jpeg,png|max:2048',
+            'categories'   => 'required|array',
             'condition_id' => 'required',
-            'categories' => 'required|array', // ← 追加：配列で必須にする
+            'price'        => 'required|integer|min:0',
         ], [
-            'name.required'         => '商品名を入力してください。',
-            'price.required'        => '価格を入力してください。',
-            'price.integer'         => '価格は数値で入力してください。',
-            'price.min'             => '価格は1円以上で入力してください。',
-            'price.max'             => '価格は9,999,999円以下で入力してください。',
-            'image.required'        => '商品画像を選択してください。',
-            'image.image'           => '画像ファイルを選択してください。',
-            'image.mimes'           => '画像はjpegまたはpng形式でアップロードしてください。',
+            // 💡 エラーメッセージの文言を定義書の表記に完全に合わせる
+            'name.required'         => '入力必須',
+            'description.required'  => '入力必須',
+            'description.max'       => '最大文字数255',
+            'image.required'        => 'アップロード必須',
+            'image.image'           => '画像ファイルを選択してください',
+            'image.mimes'           => '拡張子が.jpegもしくは.png',
             'image.max'             => '画像サイズは2MB以内でアップロードしてください。',
-            'description.required'  => '説明文を入力してください。',
-            'condition_id.required' => '商品の状態を選択してください。',
-            'categories.required'   => 'カテゴリを1つ以上選択してください。',
+            'categories.required'   => '選択必須',
+            'condition_id.required' => '選択必須',
+            'price.required'        => '入力必須',
+            'price.integer'         => '数値型',
+            'price.min'             => '0円以上',
         ]);
 
         // 画像を保存
@@ -55,8 +59,7 @@ class ItemController extends Controller
             return back()->withErrors(['image' => '画像のアップロードに失敗しました。'])->withInput();
         }
 
-
-        // データベースに保存（一度変数に代入します）
+        // データベースに保存
         $item = Item::create([
             'user_id'      => auth()->id(),
             'name'         => $request->name,
@@ -72,7 +75,9 @@ class ItemController extends Controller
         return redirect()->route('item.create')->with('message', '商品を出品しました！');
     }
 
-    // 商品一覧（トップページ・タブ切り替え対応版）
+    /**
+     * 商品一覧（トップページ・タブ切り替え対応版）
+     */
     public function index(Request $request)
     {
         $keyword = $request->input('keyword');
@@ -112,12 +117,12 @@ class ItemController extends Controller
 
         $items = $query->latest()->get();
 
-        // 💡 戻す画面はトップページのビュー（例: 'index'）です
         return view('index', compact('items', 'keyword', 'tab'));
     }
 
-
-    // 商品詳細（重複を統合）
+    /**
+     * 商品詳細
+     */
     public function show(Item $item)
     {
         if ($item->is_sold && (!Auth::check() || $item->buyer_id !== Auth::id())) {
@@ -130,15 +135,18 @@ class ItemController extends Controller
         return view('item.show', compact('item'));
     }
 
-    // 購入済み商品一覧（マイページ用など）
+    /**
+     * 購入済み商品一覧
+     */
     public function purchasedItems()
     {
-        // Itemモデルに buyer_id カラムがある前提
         $items = Item::where('buyer_id', auth()->id())->get();
         return view('item.purchased', compact('items'));
     }
 
-    // ① 購入確認画面
+    /**
+     * ① 購入確認画面
+     */
     public function purchase(Item $item)
     {
         if ($item->user_id === auth()->id()) {
@@ -150,7 +158,9 @@ class ItemController extends Controller
         return view('item.purchase', compact('item'));
     }
 
-        // ② 決済・確定処理（支払い方法による分岐対応版）
+    /**
+     * ② 決済・確定処理（支払い方法による分岐対応版）
+     */
     public function checkout(Item $item, Request $request)
     {
         if ($item->is_sold) {
@@ -205,13 +215,11 @@ class ItemController extends Controller
         return redirect()->route('item.purchase', $item)->with('error', '支払い方法を正しく選択してください。');
     }
 
-    // ③ 購入完了画面（サンクスページ）の表示
+    /**
+     * ③ 購入完了画面（サンクスページ）の表示
+     */
     public function thanks(Item $item)
     {
         return view('item.thanks', compact('item'));
     }
-
 }
-
-
-

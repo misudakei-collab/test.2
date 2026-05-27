@@ -29,7 +29,7 @@ class CreateNewUser implements CreatesNewUsers
     protected function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:20'],
             'email' => [
                 'required',
                 'string',
@@ -37,7 +37,7 @@ class CreateNewUser implements CreatesNewUsers
                 'max:255',
                 Rule::unique(User::class),
             ],
-            'password' => $this->passwordRules(), // 8文字以上のルールはPasswordValidationRulesに含まれます
+            'password' => $this->passwordRules(),
         ];
     }
 
@@ -46,8 +46,10 @@ class CreateNewUser implements CreatesNewUsers
     {
         return [
             'name.required' => 'お名前を入力してください',
+            'name.max'      => 'お名前は20文字以内で入力してください', 
             'email.required' => 'メールアドレスを入力してください',
             'email.email' => 'メールアドレスはメール形式で入力してください',
+            'email.unique' => 'メールアドレスは既に存在します',
             'password.required' => 'パスワードを入力してください',
             'password.min' => 'パスワードは8文字以上で入力してください',
             'password.confirmed' => 'パスワードと一致しません',
