@@ -1,0 +1,217 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Item;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Condition;
+use App\Models\Category;
+use Stripe\Stripe;
+use Stripe\Checkout\Session as StripeSession;
+
+class ItemController extends Controller
+{
+    // 出品画面の表示
+    public function create()
+    {
+        $conditions = Condition::all();
+        $categories = Category::all();
+
+        return view('item.create', compact('conditions', 'categories'));
+    }
+
+
+    // 商品の保存処理
+    public function store(Request $request)
+    {
+        // バリデーションに categories を追加
+        $request->validate([
+            'name' => 'required',
+            'price' => 'required|integer|min:1|max:9999999',
+            'image' => 'required|image|mimes:jpeg,png|max:2048',
+            'description' => 'required',
+            'condition_id' => 'required',
+            'categories' => 'required|array', // ← 追加：配列で必須にする
+        ], [
+            'name.required'         => '商品名を入力してください。',
+            'price.required'        => '価格を入力してください。',
+            'price.integer'         => '価格は数値で入力してください。',
+            'price.min'             => '価格は1円以上で入力してください。',
+            'price.max'             => '価格は9,999,999円以下で入力してください。',
+            'image.required'        => '商品画像を選択してください。',
+            'image.image'           => '画像ファイルを選択してください。',
+            'image.mimes'           => '画像はjpegまたはpng形式でアップロードしてください。',
+            'image.max'             => '画像サイズは2MB以内でアップロードしてください。',
+            'description.required'  => '説明文を入力してください。',
+            'condition_id.required' => '商品の状態を選択してください。',
+            'categories.required'   => 'カテゴリを1つ以上選択してください。',
+        ]);
+
+        // 画像を保存
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('items', 'public');
+        } else {
+            return back()->withErrors(['image' => '画像のアップロードに失敗しました。'])->withInput();
+        }
+
+
+        // データベースに保存（一度変数に代入します）
+        $item = Item::create([
+            'user_id'      => auth()->id(),
+            'name'         => $request->name,
+            'brand'        => $request->brand ?? null,
+            'description'  => $request->description,
+            'price'        => $request->price,
+            'image_path'   => $path,
+            'condition'    => $request->condition_id,
+        ]);
+
+        $item->categories()->attach($request->categories);
+
+        return redirect()->route('item.create')->with('message', '商品を出品しました！');
+    }
+
+    // 商品一覧（トップページ・タブ切り替え対応版）
+    public function index(Request $request)
+    {
+        $keyword = $request->input('keyword');
+
+        if (!empty($keyword)) {
+            $tab = 'recommend';
+        } else {
+            $tab = $request->query('tab', 'recommend');
+        }
+
+        $query = Item::query();
+
+        // 1. タブに応じた条件分岐
+        if ($tab === 'like') {
+            if (Auth::check()) {
+                $query->whereHas('likedItems', function($q) {
+                    $q->where('user_id', Auth::id());
+                });
+            } else {
+                $query->whereRaw('1 = 0');
+            }
+        } else {
+            // おすすめタブ：自分が出品した商品は表示しない
+            if (Auth::check()) {
+                $query->where('user_id', '!=', Auth::id());
+            }
+        }
+
+        // 2. 検索キーワードの処理（ブランド検索対応）
+        if ($keyword) {
+            $query->where(function($q) use ($keyword) {
+                $q->where('name', 'LIKE', "%{$keyword}%")
+                  ->orWhere('description', 'LIKE', "%{$keyword}%")
+                  ->orWhere('brand', 'LIKE', "%{$keyword}%");
+            });
+        }
+
+        $items = $query->latest()->get();
+
+        // 💡 戻す画面はトップページのビュー（例: 'index'）です
+        return view('index', compact('items', 'keyword', 'tab'));
+    }
+
+
+    // 商品詳細（重複を統合）
+    public function show(Item $item)
+    {
+        if ($item->is_sold && (!Auth::check() || $item->buyer_id !== Auth::id())) {
+            return redirect()->route('item.index')->with('error', 'この商品は売り切れのため詳細を表示できません');
+        }
+
+        // カテゴリも一緒に読み込む
+        $item->load('categories');
+
+        return view('item.show', compact('item'));
+    }
+
+    // 購入済み商品一覧（マイページ用など）
+    public function purchasedItems()
+    {
+        // Itemモデルに buyer_id カラムがある前提
+        $items = Item::where('buyer_id', auth()->id())->get();
+        return view('item.purchased', compact('items'));
+    }
+
+    // ① 購入確認画面
+    public function purchase(Item $item)
+    {
+        if ($item->user_id === auth()->id()) {
+            return redirect()->route('item.show', $item)->with('error', '自分が出品した商品は購入できません。');
+        }
+        if ($item->is_sold) {
+            return redirect()->route('item.show', $item)->with('error', 'この商品はすでに売り切れです。');
+        }
+        return view('item.purchase', compact('item'));
+    }
+
+        // ② 決済・確定処理（支払い方法による分岐対応版）
+    public function checkout(Item $item, Request $request)
+    {
+        if ($item->is_sold) {
+            return redirect()->route('item.index')->with('error', 'この商品はすでに売り切れです。');
+        }
+
+        // 画面から送られてきた支払い方法を取得
+        $paymentMethod = $request->input('payment_method');
+
+        // 💳 A. クレジットカード払いが選ばれた場合 ➡️ Stripe決済へ
+        if ($paymentMethod === 'card') {
+            Stripe::setApiKey(env('STRIPE_SECRET'));
+
+            $checkoutSession = StripeSession::create([
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'jpy',
+                        'product_data' => [
+                            'name' => $item->name,
+                        ],
+                        'unit_amount' => $item->price,
+                    ],
+                    'quantity' => 1,
+                ]],
+                'mode' => 'payment',
+                'success_url' => route('item.thanks', $item),
+                'cancel_url' => route('item.purchase', $item),
+            ]);
+
+            // データベースの状態を購入済みに更新
+            $item->update([
+                'buyer_id' => auth()->id(),
+                'is_sold' => true,
+            ]);
+
+            return redirect()->away($checkoutSession->url);
+        }
+
+        // 🏪 B. コンビニ払いが選ばれた場合 ➡️ Stripeを通さず即完了画面へ
+        if ($paymentMethod === 'konbini') {
+            // データベースの状態を購入済みに更新
+            $item->update([
+                'buyer_id' => auth()->id(),
+                'is_sold' => true,
+            ]);
+
+            return redirect()->route('item.thanks', $item)->with('message', 'コンビニ支払いの受け付けが完了しました。');
+        }
+
+        // 万が一、どちらも選ばれていなければ購入画面に戻す
+        return redirect()->route('item.purchase', $item)->with('error', '支払い方法を正しく選択してください。');
+    }
+
+    // ③ 購入完了画面（サンクスページ）の表示
+    public function thanks(Item $item)
+    {
+        return view('item.thanks', compact('item'));
+    }
+
+}
+
+
+
