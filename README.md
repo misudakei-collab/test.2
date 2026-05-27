@@ -49,19 +49,6 @@
 
 ## 使用技術（実行環境）
 * **PHP** : 8.x
-* **Laravel** : 11.x
-* **MySQL** : 8.0.x
-* **Docker / Laravel Sail**
-* **Stripe API**
-コードは注意してご使用ください。🚀 修正をGitHubに反映させるコマンドファイルを保存したら、以下のコマンドでGitHubへ最新状態を送信してください。bashgit add README.md
-git commit -m "docs: 仕様変更・独自カスタマイズの記述を追加"
-git push origin main
-コードは注意してご使用ください。これで、あなたが工夫したこだわりポイントがGitHub上で誰にでもバッチリ伝わるようになります！記述のニュアンスなど、こちらの内容で問題なさそうでしょうか？
-
----
-
-## 使用技術（実行環境）
-* **PHP** : 8.x
 * **Laravel** : 11.x（またはお使いのバージョン）
 * **MySQL** : 8.0.x
 * **Docker / Laravel Sail**
