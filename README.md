@@ -107,97 +107,90 @@ Markdownのコードブロック（```mermaid）によってGitHub上で自動�
 
 ```mermaid
 erDiagram
-    users ||--o{ items : "出品する"
-    users ||--o{ comments : "コメントする"
-    users ||--o{ favorites : "お気に入り登録"
-    users ||--o{ purchases : "購入する"
-    users ||--o| profiles : "プロフィールを持つ"
-
-    categories ||--o{ items : "カテゴリに属する"
-    conditions ||--o{ items : "状態を持つ"
-
-    items ||--o{ comments : "コメントされる"
-    items ||--o{ favorites : "お気に入りされる"
-    items ||--o| purchases : "購入される"
+    users ||--o{ items : "出品する (user_id)"
+    users ||--o{ comments : "コメントする (user_id)"
+    users ||--o{ purchases : "購入する (user_id)"
+    users ||--o| profiles : "プロフィールを持つ (user_id)"
+    
+    categories ||--o{ items : "カテゴリに属する (category_id)"
+    conditions ||--o{ items : "状態を持つ (condition)"
+    
+    items ||--o{ comments : "コメントされる (item_id)"
+    items ||--o{ purchases : "購入される (item_id)"
 
     users {
-        bigint id PK
-        string name
-        string email
+        unsigned_bigint id PK
+        varchar_255 name
+        varchar_255 email UK
         timestamp email_verified_at
-        string password
-        string remember_token
+        varchar_255 password
+        varchar_100 remember_token
         timestamp created_at
         timestamp updated_at
     }
 
     profiles {
-        bigint id PK
-        bigint user_id FK
-        string postal_code
-        string address
-        string building
-        string image_url
+        unsigned_bigint id PK
+        unsigned_bigint user_id FK "users(id)"
+        varchar_255 postal_code
+        varchar_255 address
+        varchar_255 building
+        varchar_255 image_url
         timestamp created_at
         timestamp updated_at
     }
 
     items {
-        bigint id PK
-        bigint user_id FK
-        bigint category_id FK
-        bigint condition FK
-        string name
-        string image_path
-        string brand
+        unsigned_bigint id PK
+        unsigned_bigint user_id FK "users(id)"
+        unsigned_bigint category_id FK "categories(id)"
+        unsigned_bigint condition FK "conditions(id) ★"
+        varchar_255 name
         integer price
+        varchar_255 brand
         text description
+        varchar_255 image_path "★"
+        boolean is_sold
+        unsigned_bigint buyer_id FK "users(id)"
         timestamp created_at
         timestamp updated_at
     }
 
     categories {
-        bigint id PK
-        string name
+        unsigned_bigint id PK
+        varchar_255 name
         timestamp created_at
         timestamp updated_at
     }
 
     conditions {
-        bigint id PK
-        string condition
+        unsigned_bigint id PK
+        varchar_255 condition "★"
         timestamp created_at
         timestamp updated_at
     }
 
     comments {
-        bigint id PK
-        bigint user_id FK
-        bigint item_id FK
-        text body
-        timestamp created_at
-        timestamp updated_at
-    }
-
-    favorites {
-        bigint id PK
-        bigint user_id FK
-        bigint item_id FK
+        unsigned_bigint id PK
+        unsigned_bigint user_id FK "users(id)"
+        unsigned_bigint item_id FK "items(id)"
+        text body "★"
         timestamp created_at
         timestamp updated_at
     }
 
     purchases {
-        bigint id PK
-        bigint user_id FK
-        bigint item_id FK
-        string payment_method
-        string shipping_postal_code
-        string shipping_address
-        string shipping_building
+        unsigned_bigint id PK
+        unsigned_bigint user_id FK "users(id)"
+        unsigned_bigint item_id FK "items(id)"
+        varchar_255 payment_method
+        varchar_255 shipping_postal_code
+        varchar_255 shipping_address
+        varchar_255 shipping_building
         timestamp created_at
         timestamp updated_at
     }
+
 ```
 
 ---
