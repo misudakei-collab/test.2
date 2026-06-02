@@ -30,7 +30,6 @@ docker-compose exec laravel.test php artisan key:generate
 
 ### 3. マイグレーション＆シーダー実行
 ```bash
-# アカウントと商品データが完璧な繋がりを持って一瞬でセットアップされます
 docker-compose exec laravel.test php artisan migrate:fresh --seed
 ```
 
