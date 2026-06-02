@@ -55,9 +55,20 @@ services:
             - '${FORWARD_MAILPIT_PORT:-8025}:8025'
         networks:
             - sail
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: coachtech-furima-phpmyadmin
+        environment:
+            - PMA_ARBITRARY=1
+            - PMA_HOST=mysql
+        ports:
+            - "8080:80"
+        networks:
+            - sail
 networks:
     sail:
         driver: bridge
 volumes:
     sail-mysql:
         driver: local
+
