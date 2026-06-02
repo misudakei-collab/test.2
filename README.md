@@ -36,14 +36,14 @@ docker-compose exec laravel.test php artisan migrate:fresh --seed
 
 ---
 
-## 🌐 開発環境URL一覧
+##  開発環境URL一覧
 * **トップページ（商品一覧）** : http://localhost/
 * **ユーザー登録** : http://localhost/register
 * **メール認証確認** : http://localhost/email/verify （認証未完了時のガード画面）
 * **Mailpit（開発用メールボックス）** : http://localhost:8025/
 * **phpMyAdmin（DB管理ツール）** : http://localhost:8080/
 
-### 🔑 phpMyAdmin ログイン情報
+###  phpMyAdmin ログイン情報
 開発環境のデータベースをGUIで視認・管理できるよう、以下の認証情報で接続可能です。
 
 - **サーバ (Server)**: `mysql`
