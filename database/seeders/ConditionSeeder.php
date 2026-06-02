@@ -23,5 +23,5 @@ class ConditionSeeder extends Seeder
             \App\Models\Condition::create($condition);
         }
     }
-    
+
 }

@@ -28,7 +28,7 @@ Route::middleware('auth')->group(function () {
         // マイページや機能系（認証前は完全にブロックされます）
         Route::get('/mypage', [ProfileController::class, 'index'])->name('mypage.index');
         Route::post('/item/{item}/like', [LikeController::class, 'toggle'])->name('like.toggle');
-        Route::post('/item/{item}/comment', [App\Http\Controllers\CommentController::class, 'store'])->name('comment.store');
+        Route::post('/item/{item}/comment', [ItemController::class, 'commentStore'])->name('comment.store');
 
         // プロフィール設定
         Route::get('/mypage/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -23,9 +23,9 @@ class Item extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function condition()
+      public function itemCondition()
     {
-        return $this->belongsTo(Condition::class);
+        return $this->belongsTo(Condition::class, 'condition', 'id');
     }
 
     public function categories()

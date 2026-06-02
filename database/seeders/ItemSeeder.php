@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Item;
 use App\Models\Condition;
+use App\Models\User;
 
 class ItemSeeder extends Seeder
 {
@@ -13,14 +14,17 @@ class ItemSeeder extends Seeder
      */
     public function run(): void
     {
-        // 💡 エラー回避のポイント：conditionsテーブルのカラム名（condition）からIDを安全に取得します
         try {
+            // ConditionSeederのカラム名「condition」から正確にIDを引っ張るマップを作成
             $conditions = Condition::pluck('id', 'condition')->toArray();
         } catch (\Exception $e) {
             $conditions = [];
         }
 
-        // 📋 ご指定いただいた本物のS3画像URLの配列（日本語URLもそのまま完全に維持しています）
+        // メインテストユーザー（Admin1）を取得
+        $admin1 = User::where('email', 'mi.su.da.kei@gmail.com')->first();
+        $userId = $admin1 ? $admin1->id : 1;
+
         $items = [
             [
                 'name' => '腕時計',
@@ -45,7 +49,7 @@ class ItemSeeder extends Seeder
                 'price' => 300,
                 'brand' => 'なし',
                 'description' => '新鮮な玉ねぎ3束のセット',
-                'image_path' => 'https://coachtech-matter.s3.ap-northeast-1.amazonaws.com/image/Armani+Mens+Clock.jpg',
+                'image_path' => 'https://coachtech-matter.s3.ap-northeast-1.amazonaws.com/image/iLoveIMG+d.jpg',
                 'condition_name' => 'やや傷や汚れあり',
                 'default_id' => 3,
             ],
@@ -114,20 +118,23 @@ class ItemSeeder extends Seeder
             ],
         ];
 
-        // 🔄 ループを回してデータベースに一括登録
         foreach ($items as $itemData) {
             $conditionId = $conditions[$itemData['condition_name']] ?? $itemData['default_id'];
 
-            Item::create([
-                'user_id'     => 1,
-                'condition'   => $conditionId, // 💡 エラーの原因だったカラム名を実際の「condition」に修正
-                'name'        => $itemData['name'],
-                'price'       => $itemData['price'],
-                'brand'       => $itemData['brand'],
-                'description' => $itemData['description'],
+            $newItem = Item::create([
+                'user_id'      => $userId,
+                 'condition'   => $conditionId,
+                'name'         => $itemData['name'],
+                'price'        => $itemData['price'],
+                'brand'        => $itemData['brand'],
+                'description'  => $itemData['description'],
                 'image_path'  => $itemData['image_path'],
-                'is_sold'     => false,
             ]);
+
+
+            if (method_exists($newItem, 'categories')) {
+                $newItem->categories()->attach($itemData['default_id']);
+            }
         }
     }
 }

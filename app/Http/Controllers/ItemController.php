@@ -129,8 +129,8 @@ class ItemController extends Controller
             return redirect()->route('item.index')->with('error', 'この商品は売り切れのため詳細を表示できません');
         }
 
-        // カテゴリも一緒に読み込む
-        $item->load('categories');
+
+        $item->load(['categories', 'itemCondition']);
 
         return view('item.show', compact('item'));
     }
@@ -222,4 +222,30 @@ class ItemController extends Controller
     {
         return view('item.thanks', compact('item'));
     }
+
+        /**
+     * 💡 新設：コメントの投稿・保存処理
+     */
+    public function commentStore(Request $request, $itemId)
+    {
+        // 1. バリデーションチェック（空欄での送信をブロック）
+        $request->validate([
+            'comment' => 'required|max:255',
+        ], [
+            'comment.required' => 'コメント内容を入力してください。',
+            'comment.max'      => 'コメントは255文字以内で入力してください。',
+        ]);
+
+        // 2. データベース（commentsテーブル）に確実に保存
+        \App\Models\Comment::create([
+            'user_id' => auth()->id(), // ログインしているユーザーのID
+            'item_id' => $itemId,      // 対象の商品のID
+            'body'    => $request->comment, // 送られてきたコメント本文
+        ]);
+
+        // 3. コメントを打った元の商品の詳細画面へメッセージ付きで戻す
+        return back()->with('message', 'コメントを投稿しました！');
+    }
+
+
 }
