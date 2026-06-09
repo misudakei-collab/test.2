@@ -164,12 +164,12 @@ erDiagram
         unsigned_bigint id PK
         unsigned_bigint user_id FK "users(id)"
         unsigned_bigint category_id FK "categories(id)"
-        unsigned_bigint condition FK "conditions(id) ★"
+        unsigned_bigint condition FK "conditions(id)"
         varchar_255 name
         integer price
         varchar_255 brand
         text description
-        varchar_255 image_path "★"
+        varchar_255 image_path
         boolean is_sold
         unsigned_bigint buyer_id FK "users(id)"
         timestamp created_at
@@ -185,7 +185,7 @@ erDiagram
 
     conditions {
         unsigned_bigint id PK
-        varchar_255 condition "★"
+        varchar_255 condition
         timestamp created_at
         timestamp updated_at
     }
@@ -194,7 +194,7 @@ erDiagram
         unsigned_bigint id PK
         unsigned_bigint user_id FK "users(id)"
         unsigned_bigint item_id FK "items(id)"
-        text body "★"
+        text body 
         timestamp created_at
         timestamp updated_at
     }
