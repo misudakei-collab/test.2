@@ -20,8 +20,12 @@ class ConditionSeeder extends Seeder
         ];
 
         foreach ($conditions as $condition) {
-            \App\Models\Condition::create($condition);
+            // 💡 createの代わりにupdateOrCreateを使うことで、重複登録を防ぎます
+            \App\Models\Condition::updateOrCreate(
+                ['condition' => $condition['condition']], // すでに同じ文字列があるかチェック
+                $condition // なければ新規作成、あれば上書き（増えない）
+            );
         }
     }
-
 }
+
