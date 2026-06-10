@@ -28,7 +28,7 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
-        // 💡 バリデーション定義書のルールに100%合わせる
+        // 💡 バリデーション定義書
         $request->validate([
             'name'         => 'required',
             'description'  => 'required|max:255',
@@ -37,19 +37,23 @@ class ItemController extends Controller
             'condition_id' => 'required',
             'price'        => 'required|integer|min:0',
         ], [
-            // 💡 エラーメッセージの文言を定義書の表記に完全に合わせる
-            'name.required'         => '入力必須',
-            'description.required'  => '入力必須',
-            'description.max'       => '最大文字数255',
-            'image.required'        => 'アップロード必須',
-            'image.image'           => '画像ファイルを選択してください',
-            'image.mimes'           => '拡張子が.jpegもしくは.png',
-            'image.max'             => '画像サイズは2MB以内でアップロードしてください。',
-            'categories.required'   => '選択必須',
-            'condition_id.required' => '選択必須',
-            'price.required'        => '入力必須',
-            'price.integer'         => '数値型',
-            'price.min'             => '0円以上',
+            'name.required'         => '商品名を入力してください（入力必須）',
+
+            'description.required'  => '商品の説明を入力してください（入力必須）',
+            'description.max'       => '商品の説明は255文字以内で入力してください（最大文字数255）',
+
+            'image.required'        => '商品画像をアップロードしてください（アップロード必須）',
+            'image.image'           => '商品画像には画像ファイルを選択してください',
+            'image.mimes'           => '商品画像の拡張子は.jpegもしくは.pngのみ有効です',
+            'image.max'             => '商品画像は2MB以内でアップロードしてください。',
+
+            'categories.required'   => 'カテゴリーを選択してください（選択必須）',
+
+            'condition_id.required' => '商品の状態を選択してください（選択必須）',
+
+            'price.required'        => '販売価格を入力してください（入力必須）',
+            'price.integer'         => '販売価格は数値で入力してください（数値型）',
+            'price.min'             => '販売価格は0円以上で入力してください（0円以上）',
         ]);
 
         // 画像を保存
