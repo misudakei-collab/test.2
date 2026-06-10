@@ -33,13 +33,19 @@ class ProfileController extends Controller
     {
         $request->validate([
             'postal_code' => ['required', 'string', 'regex:/^\d{3}-\d{4}$/'],
-            'address'     => 'required|string',
-            'building'    => 'nullable',
+            'address'     => 'required|string|max:255',
+            'building'    => 'nullable|string|max:255',
         ], [
-            // 💡 メッセージ
-            'postal_code.required' => '入力必須',
-            'postal_code.regex'    => 'ハイフンありの8文字',
-            'address.required'     => '入力必須',
+            'postal_code.required' => '郵便番号を入力してください',
+            'postal_code.string'   => '正しい形式で入力してください',
+            'postal_code.regex'    => '郵便番号は「-（ハイフン）」を含む8文字で入力してください',
+            
+            'address.required'     => '住所を入力してください',
+            'address.string'       => '正しい形式で入力してください',
+            'address.max'          => '住所は255文字以内で入力してください',
+            
+            'building.string'      => '正しい形式で入力してください',
+            'building.max'         => '建物名は255文字以内で入力してください',
         ]);
 
         auth()->user()->update([
@@ -50,7 +56,6 @@ class ProfileController extends Controller
 
         return redirect()->route('item.purchase', $item)->with('message', '配送先住所を更新しました！');
     }
-
     /**
      * プロフィール更新処理
      */
