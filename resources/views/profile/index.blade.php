@@ -10,7 +10,7 @@
 <div class="item-list" style="display: flex; flex-wrap: wrap;">
     @forelse($purchasedItems as $item)
         <div class="item-card" style="margin: 10px; border: 1px solid #ccc; padding: 10px;">
-            <img src="{{ asset('storage/' . $item->image_path) }}" width="100">
+            <img src="{{ asset('storage/' . $item->image_url) }}" width="100">
             <p>{{ $item->name }}</p>
             <p>¥{{ number_format($item->price) }}</p>
         </div>
