@@ -15,7 +15,7 @@
 
         <h1 style="text-align: center; font-size: 1.6em; font-weight: bold; margin-bottom: 40px; color: #111;">ログイン</h1>
 
-        <!-- エラー全体の表示エリア（バリデーションエラーがあった場合） -->
+        <!-- 💡 エラー全体の表示エリア（バリデーションエラーがあった場合） -->
         @if ($errors->any())
             <div style="background-color: #f8d7da; color: #721c24; padding: 12px; margin-bottom: 25px; border: 1px solid #f5c6cb; border-radius: 4px; font-size: 0.95em;">
                 <ul style="margin: 0; padding-left: 20px;">
@@ -57,3 +57,4 @@
     </div>
 </body>
 </html>
+
