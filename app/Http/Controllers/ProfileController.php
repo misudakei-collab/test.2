@@ -56,6 +56,7 @@ class ProfileController extends Controller
 
         return redirect()->route('item.purchase', $item)->with('message', '配送先住所を更新しました！');
     }
+    
     /**
      * プロフィール更新処理
      */
@@ -65,18 +66,28 @@ class ProfileController extends Controller
             'image'       => 'nullable|image|mimes:jpeg,png|max:2048',
             'name'        => 'required|string|max:20',
             'postal_code' => ['required', 'string', 'regex:/^\d{3}-\d{4}$/'],
-            'address'     => 'required|string',
+            'address'     => 'required|string|max:255',
+            'building'    => 'nullable|string|max:255',
         ], [
-            // 💡 メッセージ
             'image.image'          => '画像ファイルを選択してください',
-            'image.mimes'          => '拡張子が.jpegもしくは.png',
-            'name.required'        => '入力必須',
-            'name.max'             => '20文字以内',
-            'postal_code.required' => '入力必須',
-            'postal_code.regex'    => 'ハイフンありの8文字',
-            'address.required'     => '入力必須',
-        ]);
+            'image.mimes'          => '拡張子が.jpegもしくは.pngの画像を選択してください',
+            'image.max'            => '画像サイズは2MB以内のものを選択してください',
+            
+            'name.required'        => 'お名前を入力してください',
+            'name.string'          => '正しい形式で入力してください',
+            'name.max'             => 'お名前は20文字以内で入力してください',
+            
+            'postal_code.required' => '郵便番号を入力してください',
+            'postal_code.string'   => '正しい形式で入力してください',
+            'postal_code.regex'    => '郵便番号は「-（ハイフン）」を含む8文字で入力してください',
+            
+            'address.required'     => '住所を入力してください',
+            'address.string'       => '正しい形式で入力してください',
+            'address.max'          => '住所は255文字以内で入力してください',
 
+            'building.string'      => '正しい形式で入力してください',
+            'building.max'         => '建物名は255文字以内で入力してください',
+        ]);
         $user = auth()->user();
 
         // 1. 画像の保存処理
