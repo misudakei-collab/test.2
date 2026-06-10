@@ -23,7 +23,7 @@ services:
             - sail
         depends_on:
             - mysql
-            - mailhog # 💡 mailpitからmailhogに変更
+            - mailhog
     mysql:
         image: 'mysql:8.4'
         ports:
@@ -49,7 +49,7 @@ services:
                 - '-p${DB_PASSWORD}'
             retries: 3
             timeout: 5s
-    mailhog: # 💡 mailpitのブロックをまるごとmailhogに変更
+    mailhog: # 
         image: 'mailhog/mailhog:latest'
         ports:
             - '${FORWARD_MAILHOG_PORT:-1025}:1025'
