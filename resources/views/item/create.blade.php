@@ -78,7 +78,7 @@
                         <option value="">選択してください</option>
                         @foreach($conditions as $condition)
                             <option value="{{ $condition->id }}" {{ old('condition_id') == $condition->id ? 'selected' : '' }}>
-                                {{ $condition->name }}
+                                {{ $condition->condition }}
                             </option>
                         @endforeach
                     </select>
