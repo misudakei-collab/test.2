@@ -15,35 +15,36 @@
 
         <h1 style="text-align: center; font-size: 1.6em; font-weight: bold; margin-bottom: 40px; color: #111;">会員登録</h1>
 
-        <form action="/register?redirect=/email/verify" method="POST" style="display: flex; flex-direction: column; gap: 25px;">
+        <!-- 💡 エラー全体の表示エリア（バリデーションエラーがあった場合） -->
+        @if ($errors->any())
+            <div style="background-color: #f8d7da; color: #721c24; padding: 12px; margin-bottom: 25px; border: 1px solid #f5c6cb; border-radius: 4px; font-size: 0.95em;">
+                <ul style="margin: 0; padding-left: 20px;">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
+        <form action="/register?redirect=/email/verify" method="POST" style="display: flex; flex-direction: column; gap: 25px;">
             @csrf
 
             <!-- 👤 ユーザー名 -->
             <div>
                 <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #111; font-size: 0.95em;">ユーザー名</label>
                 <input type="text" name="name" value="{{ old('name') }}" style="width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 12px; font-size: 1em; box-sizing: border-box;">
-                @error('name')
-                    <p style="color: #ff4d4f; font-size: 0.85em; margin: 4px 0 0 0;">{{ $message }}</p>
-                @enderror
             </div>
 
             <!-- ✉️ メールアドレス -->
             <div>
                 <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #111; font-size: 0.95em;">メールアドレス</label>
                 <input type="email" name="email" value="{{ old('email') }}" style="width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 12px; font-size: 1em; box-sizing: border-box;">
-                @error('email')
-                    <p style="color: #ff4d4f; font-size: 0.85em; margin: 4px 0 0 0;">{{ $message }}</p>
-                @enderror
             </div>
 
             <!-- 🔒 パスワード -->
             <div>
                 <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #111; font-size: 0.95em;">パスワード</label>
                 <input type="password" name="password" style="width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 12px; font-size: 1em; box-sizing: border-box;">
-                @error('password')
-                    <p style="color: #ff4d4f; font-size: 0.85em; margin: 4px 0 0 0;">{{ $message }}</p>
-                @enderror
             </div>
 
             <!-- 🔒 確認用パスワード -->
@@ -68,3 +69,4 @@
     </div>
 </body>
 </html>
+
