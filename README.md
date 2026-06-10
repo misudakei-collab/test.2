@@ -46,7 +46,7 @@ Laravel（Fortify）をベースに、厳格なメール認証セキュリティ
 ### 1. 起動とパッケージインストール
 ```bash
 # リポジトリのクローン
-git clone git@github.com:misudakei-collab/test.2.git
+git clone https://github.com/misudakei-collab/test.2.git
 cd coachtech-furima
 
 # 起動（バックグラウンド）
