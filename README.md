@@ -43,31 +43,112 @@ Laravel（Fortify）をベースに、厳格なメール認証セキュリティ
 
 ##  開発環境のセットアップ（Docker / Laravel Sail）
 
-### 1. 起動とパッケージインストール
+> 💡 **環境構築時の重要な注意点**
+> `docker-compose up` を実行する前に、まずローカル環境で一度 `composer install` を行うか、環境変数（`.env`）を作成しておく必要があります。これを怠ると、Dockerビルド時に `vendor/laravel/sail/runtimes/...` のファイルが見つからずエラー（ビルド失敗）の原因となります。
+
+### 1. 依存パッケージの初期インストール
+まず、Dockerを起動するために必要な `vendor` ディレクトリを一時的なコンテナを使って生成、またはローカル環境でインストールします。
+
 ```bash
-# リポジトリのクローン
-git clone https://github.com/misudakei-collab/test.2.git
+# 1. 登録リポジトリのクローン
+git clone https://github.com
 cd coachtech-furima
 
+# 2. 初期パッケージのインストール（Sail起動に必要な vendor フォルダを生成）
+docker run --rm \
+    -u "(id -u):(id -g)" \
+    -v "\$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php83-composer:latest \
+    composer install --ignore-platform-reqs
+```
+
+### 2. 環境変数（.env）の設定
+コンテナの権限不一致エラーやDB接続エラーを防ぐため、Docker起動前に必ず環境変数を設定してください。
+
+```bash
+cp .env.example .env
+```
+
+`.env` を開き、以下の項目を設定・確認します。
+
+#### 🔹 権限・ユーザー設定（重要）
+Linux/macOS環境でのファイル書き込み権限の衝突を防ぐため、ファイルの末尾等に以下を追記してください。（Windows+WSL2環境でも推奨）
+```ini
+WWWGROUP=1000
+WWWUSER=1000
+```
+
+#### 🔹 データベース接続設定
+```ini
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=testing
+DB_USERNAME=sail
+DB_PASSWORD=password
+```
+
+#### 🔹 メール認証用（MailHog）設定
+認証メールを受信確認するために、メール送信先を開発環境内の MailHog に指定します。
+```ini
+MAIL_MAILER=smtp
+MAIL_HOST=mysql      # 💡 Docker環境に合わせて指定してください（環境によっては「mailhog」の場合もあります）
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="no-reply@example.com"
+MAIL_FROM_NAME="\${APP_NAME}"
+```
+※その他、Stripeの各種APIキー（`STRIPE_KEY`、`STRIPE_SECRET`）の設定も合わせて行ってください。
+
+### 3. Dockerコンテナの起動
+環境変数の準備ができたら、コンテナを構築・起動します。
+
+```bash
 # 起動（バックグラウンド）
 docker-compose up -d --build
 
-# パッケージのインストール
-docker-compose exec laravel.test composer install
-docker-compose exec laravel.test npm install && npm run dev
+# フロントエンドパッケージのインストールとビルド
+docker-compose exec laravel.test npm install
+docker-compose exec laravel.test npm run dev
 ```
 
-### 2. 環境変数の設定
+### 4. アプリケーションの初期化
+起動したコンテナ内で、キー生成、データベースの構築、および画像表示に必要なシンボリックリンクの作成を行います。
+
 ```bash
-cp .env.example .env
+# アプリケーションキーの生成
 docker-compose exec laravel.test php artisan key:generate
-```
-※ `.env` にDB接続情報、Stripeの各種キーを設定してください。
 
-### 3. マイグレーション＆シーダー実行
-```bash
+# マイグレーション＆シーダー実行（初期データの投入）
 docker-compose exec laravel.test php artisan migrate:fresh --seed
+
+# 💡 画像表示用のシンボリックリンク作成（必須）
+# 出品された商品画像やプロフィール画像をブラウザから視認可能にするために実行します
+docker-compose exec laravel.test php artisan storage:link
 ```
+
+---
+
+## 🛠️ 各種機能の動作確認手順
+
+### 1. メール認証機能の確認
+1. **ユーザー登録画面**（ http://localhost/register ）から新規会員登録を行います。
+2. 登録ボタンを押すと、**メール認証確認画面**（ http://localhost/email/verify ）へ自動で遷移します。
+3. 開発用メールボックス（ **MailHog**: http://localhost:8025/ ）を開きます。
+4. `Verify Email Address` という件名のメールが届いているので、メール内の認証リンクをクリックします。
+5. 認証が完了し、初回ログイン処理（※仕様に基づく画面への遷移）が行われます。
+
+> 💡 **【検証時の注意点】Laravel側のバリデーションメッセージを確認する方法**
+> メールアドレス入力時、ブラウザ標準のバリデーションが先に動作してしまい、Laravel側でカスタマイズしたエラーメッセージが表示されない場合があります。
+> Laravel側の挙動を純粋にテスト・確認したい場合は、該当する `form` タグに `novalidate` 属性を一時的に付与してブラウザのバリデーションを無効化してください。
+> 例: `<form action="/register" method="POST" novalidate>`
+
+### 2. 初回ログイン時の挙動について
+* 現在、会員登録直後の初回ログイン時は商品一覧画面に遷移する設定となっています。
+* 仕様に沿って、今後は**「プロフィール設定画面（ `/mypage/profile` ）」へ遷移**し、ユーザー情報（コメントや購入に必要な情報）をスムーズに登録できるよう、リダイレクト処理の実装および改修を予定しています。
 
 ---
 
